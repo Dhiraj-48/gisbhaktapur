@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bhadgaon Map</title>
+
+     <!--- leaflet css-->
+     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.8.0/dist/leaflet.css"
+     integrity="sha512-hoalWLoI8r4UszCkZ5kL8vayOGVae1oxXe/2A4AO6J9+580uKHDO3JdHb7NzwwzK5xr/Fs0W40kiNHxM9vyTtQ=="
+     crossorigin=""/>
+     <!-- css for search bar -->
+     <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+
+     <link rel="stylesheet" href="css/sidebar.css">
+
+    <style>
+        html, body, #map {
+            width: 100%;
+            height: 91%;
+            padding: 0;
+            margin-top: 45px;
+            background: #000;
+        }
+        #map 
+        { 
+            width: 100%; 
+            height: 200vh;
+            padding: 0;
+            border: 0;
+            margin-top: 0px;
+        }
+        img {
+                position: absolute;
+                top: 5px;
+                right: 10px;
+                height: 80px;
+                width: 100px;
+                /* background-color: rgb(0, 0, 0); */
+        }
+        #logo{
+            position: absolute;
+            top: 0px;
+            margin-left: 5%;
+            height: 100px;
+            width: 40px;
+        }
+        #footer{
+            width: 800px;
+            height: 50px;
+
+        }
+        #sidebar{
+            height: 500px;
+        }
+        </style>
+
+    </head>
+    <body>
+        <!-- <div class="header">
+            <a href="#default" class="title"><B>BHAKTAPUR NAGARPALIKA</B></a>
+        </div> -->
+        <div class="logo" id="logo">
+            <img src="images/bktnp.png"/>
+        </div>
+        <div class="img">
+            <img src="images/nmf.png"/>
+
+        </div>
+
+
+    <!-- <div id="map">     
+    </div> -->
+
+
+    <div id="map">
+    <!-- leaflet js-->
+    <script src="https://unpkg.com/leaflet@1.8.0/dist/leaflet.js"
+    integrity="sha512-BB3hKbKWOc9Ez/TAwyWxNXeoV9c1v6FIeYiBieIWkpLjauysF18NzgR1MBNBXf8/KABdlkX68nAhlwcDFLGPCQ=="
+    crossorigin=""></script>
+    <script src="./point.js"></script>
+    <script src="js/sidebar.js"></script>
+    <script src="./map.js"></script>
+    <script src = "./river.js"></script>
+    <script src="./wardBhaktapur.js"></script>
+    <script src="./highWay.js"></script>
+    <script src="./waterwaysdata.js"></script>
+    <!-- for sidebar -->
+    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+
+
+    <!-- <p id='pravy'>The data is:</p> -->
+    
+    <div id="sidebar">
+    </div>
+    <script>
+        //Map create
+        var map = L.map('map').setView([27.60909580651446, 85.43678027413245], 13);
+
+        // search bar
+            L.tileLayer('https://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+            // L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}.png', {
+
+                attribution: '&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+            L.Control.geocoder().addTo(map);
+
+        //google hybrid
+        var googleHybrid = L.tileLayer('http://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}',{
+        maxZoom: 20,
+        subdomains:['mt0','mt1','mt2','mt3']
+        });
+
+        //google satellite
+        var googleSat = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',{
+        maxZoom: 20,
+        subdomains:['mt0','mt1','mt2','mt3']
+        });
+
+
+        var sidebar = L.control.sidebar('sidebar', {
+                position: 'left',
+                });
+
+            setTimeout(function () {
+                sidebar.show();
+            }, 500);
+            map.addControl(sidebar);
+
+
+
+        //function to show the details of the ward of the bhaktapur district
+
+        map.createPane('pane_wardbhaktapur');
+        map.getPane('pane_wardbhaktapur').style.zIndex = 300;
+        map.getPane('pane_wardbhaktapur').style['mix-blend-mode'] = 'normal';
+
+
+                
+        //adding ward data
+        var wardbhaktapur = L.geoJSON(wardJson,{
+            // attribution: '<a href=""></a>',
+            // pane: 'pane_wardbhaktapur',
+            color:'brown',
+            onEachFeature: pop_wardbhaktapur
+        });
+        // group.eachLayer(wardbhaktapur);
+        map.on("mouserover zoomend", function() {
+         if (map.getZoom()>13|| map.getZoom()<12){
+            map.removeLayer(wardbhaktapur);//3rd geoJSON layer
+         }
+         else{
+            // ward1.addTo(map);
+            wardbhaktapur.addTo(map);
+         }
+        });
+        // map.addLayer(wardbhaktapur);
+
+
+        // var i = 0;
+        //     wardbhaktapur.eachLayer(function(layer) {
+        //         layer.bindTooltip((layer.feature.properties['DISTRICT'] !== null?String('<div style="color: #000000; font-size: 10pt; font-family: sans-serif;">' + layer.feature.properties['DISTRICT']) + '</div>':''), {permanent: true, offset: [10,10],});
+        //         labels.push(layer);
+        //         totalMarkers += 1;
+        //           layer.added = true;
+        //           addLabel(layer, i);
+        //           i++;
+        //     });
+
+            function style_wardbhaktapur(feature) {
+                return {
+                    pane: 'pane_wardbhaktapur',
+                    opacity: 1,
+                    color: 'rgba(50,136,189,1.0)',
+                    dashArray: '',
+                    lineCap: 'square',
+                    lineJoin: 'bevel',
+                    weight: 2.0,
+                    fillOpacity: 0,
+                }        
+            } 
+
+
+
+        function pop_wardbhaktapur(feature, layer){
+            layer.setStyle({
+                    color: 'brown',
+                    fillColor :'blue'});
+
+            layer.on({
+                mouseover: function populate(){
+                    document.getElementById('sidebar').innerHTML="<h1>Detail</h1> "+ "<br>" +"<b>District Name: </b>" + feature.properties.DISTRICT
+                        + "<br>" +"<b>District Code is: </b>" + feature.properties.DCODE
+                        + "<br>" +"<b>The old vdcs within the district are: </b>" + feature.properties.OLD_VDC
+                        + "<br>" +"<b>The new ward no. is:</b>" + feature.properties.NEW_WARD_N
+                        + "<br>" +"<b>The new ward code is: </b>" + feature.properties.N_WCODE;
+                }
+            });
+            layer.on({
+                    'mouseover': function(){
+                        layer.setStyle({fillColor :'green'});
+                    },
+                    'mouseout': function(){
+                        layer.setStyle({fillColor :'blue'});
+                    },
+                });
+                }
+
+            wardbhaktapur.on('mouseover', function () {
+                sidebar.show();
+
+            },
+            'mouseout',function(){
+                sidebar.disable();
+            });
+            // wardbhaktapur.on('click', function (e) {
+            //     wardbhaktapur.addTo(map);
+            //     map.setView(e.latlng, 12)
+            //     // map.fitBounds(wardbhaktapur.getBounds());
+
+            // });
+
+
+
+
+            //highway
+            
+        map.createPane('pane_highwaybhaktapur');
+        map.getPane('pane_highwaybhaktapur').style.zIndex = 300;
+        map.getPane('pane_highwaybhaktapur').style['mix-blend-mode'] = 'normal';
+
+
+                
+        //adding ward data
+        var highwaybhaktapur = L.geoJSON(highwayJson,{
+            // attribution: '<a href=""></a>',
+            // pane: 'pane_wardbhaktapur',
+            color:'brown',
+            onEachFeature: pop_highwaybhaktapur
+        });
+        // group.eachLayer(wardbhaktapur);
+        map.on("mouserover zoomend", function() {
+         if (map.getZoom()>20|| map.getZoom()<15){
+            map.removeLayer(highwaybhaktapur);//3rd geoJSON layer
+         }
+         else{
+            // ward1.addTo(map);
+            highwaybhaktapur.addTo(map);
+         }
+        });
+            function style_highwaybhaktapur(feature) {
+                return {
+                    pane: 'pane_highwaybhaktapur',
+                    opacity: 1,
+                    color: 'rgba(50,136,189,1.0)',
+                    dashArray: '',
+                    lineCap: 'square',
+                    lineJoin: 'bevel',
+                    weight: 2.0,
+                    fillOpacity: 0,
+                }        
+            } 
+
+
+
+        function pop_highwaybhaktapur(feature, layer){
+            layer.setStyle({
+                    color: 'brown',
+                    fillColor :'blue'});
+
+            layer.on({
+                mouseover: function populate(){
+                    document.getElementById('sidebar').innerHTML="<h1>Detail</h1> "+ "<br>" +"<b>Highway Name: </b>" + feature.properties.NAME
+                        + "<br>" +"<b>The highway id is: </b>" + feature.properties.FULL_ID
+                        + "<br>" +"<b>Bicycle lane available: </b>" + feature.properties.BICYCLE
+                        + "<br>" +"<b>Footpath available:</b>" + feature.properties.FOOT
+                        + "<br>" +"<b>Highway type:</b>" + feature.properties.HIGHWAY
+                        + "<br>" +"<b>Horse lane:</b>" + feature.properties.HORSE
+                        + "<br>" +"<b>No. of lane:</b>" + feature.properties.LANE
+                        + "<br>" +"<b>Motor way:</b>" + feature.properties.MOTOR
+                        + "<br>" +"<b>No. of ways:</b>" + feature.properties.ONEWAY
+                        + "<br>" +"<b>Side walk available:</b>" + feature.properties.SIDEWALK
+                        + "<br>" +"<b>Surface type:</b>" + feature.properties.SURFACE
+                        + "<br>" +"<b>Bridge exists:</b>" + feature.properties.BRIDGE
+                        + "<br>" +"<b>Road layered:</b>" + feature.properties.LAYER
+                        + "<br>" +"<b>The reference of the road is:</b>" + feature.properties.REF;
+                }
+            });
+            layer.on({
+                    'mouseover': function(){
+                        layer.setStyle({fillColor :'green'});
+                    },
+                    'mouseout': function(){
+                        layer.setStyle({fillColor :'black'});
+                    },
+                });
+                }
+
+            highwaybhaktapur.on('mouseover', function () {
+                sidebar.show();
+
+            },
+            'mouseout',function(){
+                sidebar.disable();
+            });
+
+
+        //waterways
+
+        map.createPane('pane_waterwaybhaktapur');
+        map.getPane('pane_waterwaybhaktapur').style.zIndex = 300;
+        map.getPane('pane_waterwaybhaktapur').style['mix-blend-mode'] = 'normal';
+
+
+                
+        //adding ward data
+        var waterwaybhaktapur = L.geoJSON(json_waterwaysbhaktapur,{
+            // attribution: '<a href=""></a>',
+            // pane: 'pane_wardbhaktapur',
+            color:'brown',
+            onEachFeature: pop_waterwaybhaktapur
+        });
+        // group.eachLayer(wardbhaktapur);
+        map.on("mouserover zoomend", function() {
+         if (map.getZoom()>15||map.getZoom()<14){
+            map.removeLayer(waterwaybhaktapur);//3rd geoJSON layer
+         }
+         else{
+            // ward1.addTo(map);
+            waterwaybhaktapur.addTo(map);
+         }
+        });
+
+
+            function style_waterwaybhaktapur(feature) {
+                return {
+                    pane: 'pane_waterwaybhaktapur',
+                    opacity: 1,
+                    color: 'rgba(50,136,189,1.0)',
+                    dashArray: '',
+                    lineCap: 'square',
+                    lineJoin: 'bevel',
+                    weight: 2.0,
+                    fillOpacity: 0,
+                }        
+            } 
+
+
+
+        function pop_waterwaybhaktapur(feature, layer){
+            layer.setStyle({
+                    color: 'blue',
+                    fillColor :'yellow'});
+
+            layer.on({
+                mouseover: function populate(){
+                    document.getElementById('sidebar').innerHTML="<h1>Detail</h1> "+ "<br>" +"<b>Highway Name: </b>" + feature.properties.name
+                        + "<br>" +"<b>The waterway id is: </b>" + feature.properties.full_id
+                        + "<br>" +"<b>The waterway type is: </b>" + feature.properties.waterway
+                        + "<br>" +"<b>Boat way:</b>" + feature.properties.boat;
+                }
+            });
+            layer.on({
+                    'mouseover': function(){
+                        layer.setStyle({fillColor :'blue'});
+                    },
+                    'mouseout': function(){
+                        layer.setStyle({fillColor :'yellow'});
+                    },
+                });
+                }
+
+            waterwaybhaktapur.on('mouseover', function () {
+                sidebar.show();
+
+            },
+            'mouseout',function(){
+                sidebar.disable();
+            });
+
+
+            
+            // point data
+            // map.data.loadGeoJson('point_JSON')
+            var pointbhaktapur=new L.geoJSON(point_JSON,{
+            fillColor :'red',
+            // onEachFeature:pop_pointbhaktapur
+            onEachFeature: function (feature, layer) {
+            if (feature.properties && feature.properties.PROJECT_NAME) {
+                layer.bindPopup("This project name is "+"<b>"+feature.properties.PROJECT_NAME+"."
+                    +"</b>"+"<br>"+"The project is on "+feature.properties.project_type
+                    +"."
+                    +feature.properties.consultant_name
+                    +" is the consultant of this project."
+                    +"The project's start date is:"+feature.properties.start_date
+                    +" and end date is:"+feature.properties.finish_date+"."
+                    +"The budget of this project is estimated to be "+feature.properties.budget+"."
+                    +"For further more information you can contact to "+feature.properties.contact_person_name
+                    +" or you can dial "+feature.properties.contact_no
+                    +"."+"The current status of the project is that "+feature.properties.project_brief
+                    +"<br>"+"The project is completed by "+feature.properties.project_progress+"."
+                    +"<br>"+"This is the image of the site "+feature.properties.images);
+            }
+        },
+            });
+            map.on("mouserover zoomend", function() {
+             if (map.getZoom()>19||map.getZoom()<18){
+                map.removeLayer(pointbhaktapur);//3rd geoJSON layer
+                }
+             else{
+                    // ward1.addTo(map);
+                pointbhaktapur.addTo(map);
+            }
+            });
+
+
+           //Layer controller
+        var baseMaps = {
+            "google hybrid": googleHybrid,
+            "google satellite": googleSat,
+        };
+
+        var overlayMaps = {
+            "highway" : highwaybhaktapur,
+            "ward" : wardbhaktapur,
+            "waterWays" : waterwaybhaktapur,
+            "point": pointbhaktapur,
+
+        };
+
+        L.control.layers(baseMaps,overlayMaps, {collapsed:true,position:"topright"}).addTo(map);
+    </script>
+
+    </div>
+    <div class="footer" id="footer"><br />
+        <a href="http://nepalmindfactory.org" title="homepage" style="font-family:sans-serif,Trebuchet MS; color:#ffffff; font-size:30px;">NMF</a>
+        <br /><br />
+        <span style="font-family:Trebuchet MS,sans-serif; color:#ffffff; font-size:12px;">&copy;2019 Nepal Mind Factory</span>
+        <br /><br />
+    </div>
+
+<!-- Layer Groups is for markers, and Layers control is for tilelayer -->
+    </body>
+</html>
